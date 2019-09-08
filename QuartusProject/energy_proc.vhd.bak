@@ -1,0 +1,39 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+USE IEEE.STD_LOGIC_ARITH.all;
+USE IEEE.STD_LOGIC_UNSIGNED.all;
+
+entity energy_proc is
+	port (
+			clk								: in std_logic; -- classic input
+			pickedup, flap 				: in std_logic;
+			energy_inc, energy_dec 		: out std_logic;
+			);
+end entity energy_proc;
+
+architecture behaviour of energy_proc is 
+	signal energy_inc_s : std_logic;
+	signal energy_dec_s : std_logic;
+begin
+	process(clk, pickedup)
+	begin
+		if (pickedup'event and pickedup = '1') then
+			energy_inc_s = '1';
+		else
+			energy_inc_s = '0';
+		end if;
+	end process;
+	
+	process(clk, flap)
+	begin
+		if (flap'event and flap = '1') then
+			energy_dec_s = '1';
+		else
+			energy_dec_s = '0';
+		end if;
+	end process;
+	
+	energy_dec <= energy_dec_s;
+	energy_inc <= energy_inc_s;
+end architecture;

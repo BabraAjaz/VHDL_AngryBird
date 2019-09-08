@@ -1,0 +1,151 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity game_fsm is
+
+		port
+			(
+				clk, reset																: in std_logic; -- classic inputs
+				left_click, right_click, middle_click, switch_1				: in std_logic; -- user inputs
+				dead																		: in std_logic; -- other inputs
+				
+				bird, pipes																: out std_logic; -- display on outputs
+				menu, start, pause, gameover, mode								: out std_logic; -- control signal outputs
+				state_out																: out std_logic_vector(2 downto 0)
+			);
+			
+end entity;
+architecture rtl of game_fsm is
+
+			-- Build an enumerated type for the state machine
+			type state_type is (s_menu, s_start, s_normal, s_pause, s_training, s_gameover);
+			
+			--Register (and signal) to hold the current (and next) state
+			signal state, next_state: state_type := s_menu;
+			
+begin
+			state_reg: process (clk)
+			begin
+				if reset = '1' then -- reset logic
+					state <= s_menu;
+			
+				elsif (rising_edge(clk)) then -- next state register:
+					state <= next_state;
+				end if;
+			end process;
+			
+	-- Asynchronously determine the next state based on current state and input
+			next_state_fn: process(state, left_click, right_click, switch_1, dead)
+			begin
+				case state is
+					when s_menu =>
+						if (right_click = '1') then
+							next_state <= s_start;
+						else 
+							next_state <= s_menu;
+						end if;
+						
+					when s_start =>
+						if (left_click = '1') then
+							if (switch_1 = '1') then
+								next_state <= s_normal;
+							else
+								next_state <= s_training;
+							end if;
+						else
+							next_state <= s_start;
+						end if;
+						
+					when s_normal =>
+						if (right_click = '1') then
+							next_state <= s_pause;
+						elsif (dead = '1') then
+							next_state <= s_gameover;
+						else
+							next_state <= s_normal;
+						end if;
+						
+					when s_training =>
+						if (right_click = '1') then
+							next_state <= s_pause;
+						elsif (dead = '1') then
+							next_state <= s_gameover;
+						else
+							next_state <= s_training;
+						end if;
+					
+					when s_pause =>
+						if (left_click = '1') then
+							if (switch_1 = '1') then
+								next_state <= s_normal;
+							elsif (switch_1 = '0') then
+								next_state <= s_training;
+							end if;
+						elsif (middle_click = '1') then
+							next_state <= s_start;
+						else
+							next_state <= s_pause;
+						end if;
+						
+					when s_gameover =>
+						if (left_click = '1') then
+							next_state <= s_start;
+						else
+							next_state <= s_gameover;
+						end if;
+						
+				end case;
+			end process;
+			
+			output_fn: process (state) -- output logic
+			begin
+			
+				-- SET/RESET SOME OUTPUTS/SIGNALS HERE?
+				bird <= '0';
+				pipes <= '0';
+				menu <= '0';
+				pause <= '0';
+				gameover <= '0';
+				start <= '0';
+				
+				case state is
+					when s_menu =>
+						menu <= '1';
+						state_out <= "000";
+						
+					when s_start =>
+						bird <= '1';
+						pipes <= '1';
+						start <= '1';
+						state_out <= "001";
+						
+					when s_normal =>
+						bird <= '1';
+						pipes <= '1';
+						mode <= '0';
+						state_out <= "010";
+						
+					when s_training =>
+						bird <= '1';
+						pipes <= '1';
+						mode <= '1';
+						state_out <= "011";
+
+					when s_pause =>
+						pause <= '1';
+						bird <= '1';
+						pipes <= '1';
+						gameover <= '0';
+						state_out <= "100";
+					
+					when s_gameover =>
+						gameover <= '1';
+						state_out <= "101";					
+					
+				end case;
+			end process;
+end rtl;
+			
+			
+	

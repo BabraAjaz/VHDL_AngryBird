@@ -1,0 +1,52 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+USE IEEE.STD_LOGIC_ARITH.all;
+USE IEEE.STD_LOGIC_UNSIGNED.all;
+
+--1 = pipe
+--2 = ball
+--3 = text
+
+entity disp_proc is
+	port (
+			red1, red2, green1, green2, blue1, blue2, red3, green3, blue3, red4, green4, blue4 : in std_logic_vector(2 downto 0);
+			collision_red : in std_logic;
+			red_out, green_out, blue_out : out std_logic_vector(2 downto 0)
+			);
+end entity disp_proc;
+
+architecture behaviour of disp_proc is
+	signal s_red, s_blue, s_green : std_logic_vector(2 downto 0);
+	signal collision : std_logic_vector(2 downto 0) := collision_red & collision_red & collision_red;
+begin
+	
+	process(red1, red2, red3, green1, green2, green3, blue1, blue2, blue3,collision_red)
+	begin
+		if(red4 > "000") then
+			s_red <= red4;
+			s_blue <= blue4;
+			s_green <= green4;
+		elsif(red3 > "000") then
+			s_red <= red3;
+			s_blue <= blue3;
+			s_green <= green3;
+		elsif(red2 > "000") then 
+			s_red <= red2;
+			s_blue <= blue2;
+			s_green <= green2;
+		elsif(green1 > "000" ) then
+			s_red <= red1;
+			s_blue <= blue1;
+			s_green <= green1;
+		end if; 
+		if (collision_red = '1') then
+			s_red <= collision;
+		end if;
+	red_out <= s_red;
+	green_out <= s_green;
+	blue_out <= s_blue;
+	end process;
+	
+	
+end architecture;

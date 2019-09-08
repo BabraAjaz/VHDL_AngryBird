@@ -1,0 +1,129 @@
+
+
+			-- Bouncing pipe Video 
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.all;
+USE IEEE.STD_LOGIC_ARITH.all;
+USE IEEE.STD_LOGIC_SIGNED.all;
+--LIBRARY work;
+--USE work.de0core.all;
+
+ENTITY pipe2 IS
+
+   PORT(signal mode, paused, startscreen, stop, reset							: IN std_LOGIC;
+        signal Red,Green,Blue 											: OUT std_logic_vector(3 downto 0);
+        signal Vert_sync													: IN std_logic;
+		  signal pixel_column, pixel_row 								: IN std_logic_vector(9 downto 0);
+		  signal             random 										: in std_logic_vector(7 downto 0);
+		  signal X_Pos, Y_Pos, SizeX_out, SizeY_out, Gap_Size 	: out std_logic_vector(9 downto 0);
+		  signal new_pipe 													: out std_logic;
+		  signal pipe_en 														: in std_logic;
+		  signal level															: in std_logic_vector(1 downto 0));
+end pipe2;
+
+architecture behavior of pipe2 is
+
+			-- Video Display signals   
+	signal Red_Data, Green_Data, Blue_Data : std_logic_vector(3 downto 0);
+	signal vert_sync_int, pipe_on, Direction			: std_logic;
+	signal SizeX, SizeY									: std_logic_vector(9 downto 0);  
+	signal pipe_X_motion 								: std_logic_vector(9 downto 0) := CONV_STD_LOGIC_VECTOR(2,10);
+	signal pipe_Y_motion									: std_logic_vector(9 downto 0);
+	signal pipe_Y_pos								: std_logic_vector(9 downto 0) := CONV_STD_LOGIC_VECTOR(50,10);
+	signal pipe_X_pos								: std_logic_vector(9 downto 0) := CONV_STD_LOGIC_VECTOR(150,10);
+	signal colour_set 							: std_logic_vector(2 downto 0);
+	signal new_pipe_s	: std_logic := '0';
+
+	begin           
+
+	SizeX <= CONV_STD_LOGIC_VECTOR(32,10);
+	SizeY <= CONV_STD_LOGIC_VECTOR(150,10);
+	
+
+
+	Red <=  "0000";
+	Green <=  pipe_on & pipe_on & pipe_on & pipe_on;
+	Blue <=   "0000";
+
+	
+	
+	
+	-- Bottom Pipe Top: y position + gap size
+	
+
+	RGB_Display: Process (pipe_X_pos, pipe_Y_pos, pixel_column, pixel_row, SizeX, random, pipe_en)
+	begin
+	--if (pipe_en = '1') then
+		-- top pipe
+		if ('0' & pipe_X_pos <= '0' & pixel_column + SizeX) AND -- Obs left: x position - xsize
+			('0' & pipe_X_pos + SizeX >= '0' & pixel_column) AND -- Obs right: x position + xsize
+			("0000000000" <= '0' & pixel_row) AND -- Top Pipe Top: y position
+			(CONV_STD_LOGIC_VECTOR(150, 10) >= '0' & pixel_row ) then -- Top Pipe Bottom: y position + random
+			--('0' & pipe_Y_pos + random >= '0' & pixel_row ) then -- Top Pipe Bottom: y position + random
+			pipe_on <= '1';
+		-- bottom pipe
+		elsif('0' & pipe_X_pos <= '0' & pixel_column + SizeX) AND
+			('0' & pipe_X_pos + SizeX >= '0' & pixel_column) AND
+			(CONV_STD_LOGIC_VECTOR(150,10) + CONV_STD_LOGIC_VECTOR(100,10) <= '0' & pixel_row) AND
+			--('0' & pipe_Y_pos + '0' & random + CONV_STD_LOGIC_VECTOR(100,9) <= '0' & pixel_row) AND
+			("0111100000" >= '0' & pixel_row ) then -- bottom of screen
+			pipe_on <= '1';
+		else
+			pipe_on <= '0';
+		end if;
+	--end if;
+	end process RGB_Display;
+
+
+	Move_pipe: process
+	begin
+				-- Move pipe once every vertical sync
+		wait until vert_sync'event and vert_sync = '1';
+				-- Bounce off top or bottom of screen
+				--if (pipe_en = '1') then
+					if (paused = '0' and startscreen = '0' and stop = '0') then
+						if (mode = '0') then
+							if ("00" & pipe_X_pos) >= CONV_STD_LOGIC_VECTOR(640,11) - SizeX then
+								pipe_X_motion <= - CONV_STD_LOGIC_VECTOR(2,10);
+							end if;
+						else
+							if (level = "01") then
+								if ("00" & pipe_X_pos) >= CONV_STD_LOGIC_VECTOR(640,11) - SizeX then
+									pipe_X_motion <= - CONV_STD_LOGIC_VECTOR(4,10);
+								end if;	
+							elsif (level = "10") then
+								if ("00" & pipe_X_pos) >= CONV_STD_LOGIC_VECTOR(640,11) - SizeX then
+									pipe_X_motion <= - CONV_STD_LOGIC_VECTOR(6,10);
+								end if;	
+							elsif (level = "11") then
+								if ("00" & pipe_X_pos) >= CONV_STD_LOGIC_VECTOR(640,11) - SizeX then
+									pipe_X_motion <= - CONV_STD_LOGIC_VECTOR(8,10);
+								end if;								
+							end if;
+						end if;
+						-- Compute next pipe Y position
+			
+						if ('0' & pipe_X_pos) <= SizeX - SizeX then
+							pipe_X_pos <= CONV_STD_LOGIC_VECTOR(630,10);
+							new_pipe_s <= '1';
+						--elsif ('0' & pipe_X_pos) >= CONV_STD_LOGIC_VECTOR(635,10) then
+						--	new_pipe_s <= '1';
+						else
+							pipe_X_pos <= pipe_X_pos + pipe_X_motion;
+							new_pipe_s <= '0';
+						end if;
+					end if;
+					if (reset = '1') then
+						pipe_X_pos <= CONV_STD_LOGIC_VECTOR(630,10);
+					end if;
+				--end if;
+					
+	end process Move_pipe;
+	X_Pos <= pipe_X_pos;
+	Y_Pos <= CONV_STD_LOGIC_VECTOR(150, 10);
+	SizeX_out <= SizeX;
+	SizeY_out <= SizeY;
+	Gap_Size <= '0' & CONV_STD_LOGIC_VECTOR(100,9);
+	new_pipe <= new_pipe_s;
+end behavior;
+

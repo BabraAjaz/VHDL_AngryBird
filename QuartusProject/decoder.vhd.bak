@@ -1,0 +1,34 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+USE IEEE.STD_LOGIC_ARITH.all;
+USE IEEE.STD_LOGIC_UNSIGNED.all;
+
+entity decoder is
+	port (
+			SW : in std_logic;
+			Digit0 : out std_logic_vector(3 downto 0);
+			Digit1 : out std_logic_vector(3 downto 0);
+			Digit2 : out std_logic_vector(3 downto 0);
+			Digit3 : out std_logic_vector(3 downto 0)
+			);
+end entity decoder;
+
+architecture behaviour of decoder is
+	signal integer_mp : integer; 
+begin
+	process(SW)
+	begin
+		if (SW = '1') then
+			Digit3 <= "1010";
+			Digit2 <= "1011";
+			Digit1 <= "1100";
+			Digit0 <= "1101";
+		else
+			Digit0 <= "1111";
+			Digit1 <= "1111";
+			Digit2 <= "1111";
+			Digit3 <= "1111";
+		end if;
+	end process;
+end architecture;

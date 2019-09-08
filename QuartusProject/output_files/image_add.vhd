@@ -1,0 +1,34 @@
+--library ieee;
+--use ieee.std_logic_1164.all;
+--use ieee.numeric_std.all;
+--USE IEEE.STD_LOGIC_UNSIGNED.all;
+--
+--entity image_add is
+--	port (
+--			clk : in std_logic;
+--			counted_out              : out std_logic_vector(11 downto 0)
+--			);
+--end entity image_add;
+--
+--architecture behaviour of image_add is
+--	signal Q : unsigned(11 downto 0); 
+--	signal counted : std_logic;
+--begin
+--	process(clk, reset, enable)
+--	begin
+--			if (clk'event and clk = '1') then
+--				if (Q < 2500) then
+--					Q <= Q + "000000000000000000000001";
+--					counted <= '0';
+--				else
+--					Q <= "000000000000000000000000";
+--					counted <= '1';
+--				end if;
+--			end if;
+--		if (reset = '1') then
+--			Q <= "000000000000000000000000";
+--			counted_out <= '0';
+--		end if;
+--	end process;
+--	counted_out <= counted;
+--end architecture;

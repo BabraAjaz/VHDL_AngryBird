@@ -1,0 +1,35 @@
+--seven_seg_decoder.vhdl
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity sevenseg is
+	port (
+		digit		: in std_logic_vector(3 downto 0);
+		led_out 	: out std_logic_vector(6 downto 0)
+		);
+		
+end entity;
+
+architecture rtl of sevenseg is 
+
+signal tmp : std_logic_vector(6 downto 0);
+		
+begin
+	tmp <=  "1001111" when digit = "0001" else -- 1
+		"0010010" when digit = "0010" else -- 2
+		"0000110" when digit = "0011" else -- 3
+		"1001100" when digit = "0100" else -- 4
+		"0100100" when digit = "0101" else -- 5
+		"0100000" when digit = "0110" else -- 6
+		"0001111" when digit = "0111" else -- 7
+		"0000000" when digit = "1000" else -- 8
+		"0000100" when digit = "1001" else -- 9
+		"0000000" when digit = "1010" else -- B
+		"1101111" when digit = "1011" else -- I
+		"0101111" when digit = "1100" else -- r
+		"0100001" when digit = "1101" else -- d
+		"0000001" when digit = "0000" else -- 0
+		"1111111"; -- off
+	LED_out <= tmp;
+end architecture;

@@ -1,0 +1,138 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.all;
+USE IEEE.STD_LOGIC_ARITH.all;
+USE IEEE.STD_LOGIC_SIGNED.all;
+
+ENTITY bird IS
+
+   PORT(SIGNAL SW, LC, Button, v_sync, paused, start		: IN std_logic;
+			SIGNAL pixel_column, pixel_row : IN std_logic_vector(9 downto 0);
+        SIGNAL Red,Green,Blue 			: OUT std_logic_vector(2 downto 0);
+		  SIGNAL X_Pos, Y_Pos, Size_out : OUT std_logic_vector(9 downto 0);
+		  SIGNAL bird_en 						: IN std_logic);
+END bird;
+
+architecture behavior of bird is
+
+			-- Video Display Signals   
+SIGNAL vert_sync_int, reset, bird_on, Direction			: std_logic;
+SIGNAL Size 									: std_logic_vector(9 DOWNTO 0);  
+SIGNAL bird_X_motion : std_logic_vector(9 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(2,10);
+SIGNAL bird_Y_motion		: std_logic_vector(9 DOWNTO 0);
+SIGNAL bird_Y_pos								: std_logic_vector(9 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(1,10);
+SIGNAL bird_X_pos								: std_logic_vector(9 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(300,10);
+SIGNAL colour_set 							: std_logic_vector(2 downto 0);
+
+BEGIN           
+
+	Size <= CONV_STD_LOGIC_VECTOR(8,10);
+	--bird_Y_pos <= CONV_STD_LOGIC_VECTOR(300,10);
+
+	-- need internal copy of vert_sync to read
+	--vert_sync <= vert_sync_int;
+
+	with colour_set select
+		Red(2 downto 1) <= bird_on & bird_on when "000",
+						"00" when others;
+	with colour_set select
+		Red(0)	<= bird_on when "001",
+						'0' when others;
+	with colour_set select
+		Green(2 downto 1) <= bird_on & bird_on when "010",
+							"00" when others;
+	with colour_set select
+		Green(0) <= bird_on when "011",
+							'0' when others;
+	with colour_set select
+		Blue(2 downto 1) <= bird_on & bird_on when "100",
+							"00" when others;
+	with colour_set select
+		Blue(0) <= bird_on when "101",
+							'0' when others;
+
+	--Red_Data <=  NOT bird_on;
+	--Green_Data <=  '1';
+	--Blue_Data <=   NOT bird_on;
+
+	process(Button)
+	begin
+		if (Button = '0') then
+			if (colour_set = "000") then
+				colour_set <= "001";
+			elsif (colour_set = "001") then
+				colour_set <= "010";
+			elsif (colour_set = "010") then
+				colour_set <= "011";
+			elsif (colour_set = "011") then
+				colour_set <= "100";
+			elsif (colour_set = "100") then
+				colour_set <= "101";
+			else
+				colour_set <= "000";
+			end if;
+		end if;
+	end process;
+
+	RGB_Display: Process (bird_X_pos, bird_Y_pos, pixel_column, pixel_row, Size, bird_en)
+	BEGIN
+	--if (bird_en = '1') then
+					-- Set bird_on ='1' to display bird
+		 IF ('0' & bird_X_pos <= '0' & pixel_column + Size) AND
+					-- compare positive numbers only
+			('0' & bird_X_pos + Size >= '0' & pixel_column) AND
+			('0' & bird_Y_pos <= '0' & pixel_row + Size) AND
+			('0' & bird_Y_pos + Size >= '0' & pixel_row ) THEN
+				bird_on <= '1';
+			ELSE
+				bird_on <= '0';
+		END IF;
+	--end if;
+	END process RGB_Display;
+
+	Move_bird: process
+	BEGIN
+				-- Move bird once every vertical sync
+		WAIT UNTIL v_sync'event and v_sync = '1';
+				-- Bounce off top or bottom of screen
+				--if (bird_en = '1') then
+					IF (paused = '0' and start = '0') then
+						IF (SW = '0') THEN
+							--IF ("00" & bird_X_pos) >= CONV_STD_LOGIC_VECTOR(640,11) - Size THEN
+							--	bird_X_motion <= - CONV_STD_LOGIC_VECTOR(2,10);
+							--ELSIF bird_X_pos <= Size THEN
+							--	bird_X_motion <= CONV_STD_LOGIC_VECTOR(2,10);
+							--END IF;
+							IF LC = '1' THEN
+								bird_Y_motion <= - CONV_STD_LOGIC_VECTOR(4,10);
+							ELSIF LC = '0' THEN
+								bird_Y_motion <= CONV_STD_LOGIC_VECTOR(2,10);
+							END IF;
+						ELSE
+							IF ("00" & bird_X_pos) >= x"198" - Size THEN
+								bird_X_motion <= - CONV_STD_LOGIC_VECTOR(5,10);
+							ELSIF bird_X_pos <= Size THEN
+								bird_X_motion <= CONV_STD_LOGIC_VECTOR(5,10);
+							END IF;
+							IF LC = '1' THEN
+								bird_Y_motion <= - CONV_STD_LOGIC_VECTOR(10,10);
+							ELSIF LC = '0' THEN
+								bird_Y_motion <= CONV_STD_LOGIC_VECTOR(5,10);
+							END IF;
+						END IF;
+						-- Compute next bird Y position
+							--bird_X_pos <= bird_X_pos + bird_X_motion;
+							IF ('0' & bird_Y_pos) >= CONV_STD_LOGIC_VECTOR(480,10) - Size THEN
+								bird_Y_pos <= CONV_STD_LOGIC_VECTOR(200,10);
+							ELSE 
+								bird_Y_pos <= bird_Y_pos + bird_Y_motion;
+							END IF;
+					END IF;
+				--end if;
+					
+	END process Move_bird;
+	X_Pos <= bird_X_pos;
+	Y_Pos <= bird_Y_pos;
+	Size_out <= Size;
+	
+END behavior;
+

@@ -1,0 +1,16 @@
+Fitter Status : Successful - Thu May 30 11:22:36 2019
+Quartus II 64-Bit Version : 13.0.0 Build 156 04/24/2013 SJ Full Version
+Revision Name : BEAM
+Top-level Entity Name : AngryBird
+Family : Cyclone III
+Device : EP3C16F484C6
+Timing Models : Final
+Total logic elements : 1,482 / 15,408 ( 10 % )
+    Total combinational functions : 1,429 / 15,408 ( 9 % )
+    Dedicated logic registers : 284 / 15,408 ( 2 % )
+Total registers : 284
+Total pins : 57 / 347 ( 16 % )
+Total virtual pins : 0
+Total memory bits : 401,408 / 516,096 ( 78 % )
+Embedded Multiplier 9-bit elements : 0 / 112 ( 0 % )
+Total PLLs : 1 / 4 ( 25 % )

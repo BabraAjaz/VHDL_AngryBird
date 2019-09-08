@@ -1,0 +1,114 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.all;
+USE IEEE.STD_LOGIC_ARITH.all;
+USE IEEE.STD_LOGIC_SIGNED.all;
+--LIBRARY work;
+--USE work.de0core.all;
+
+ENTITY pickup IS
+
+   PORT(signal SW, paused, start					: IN std_LOGIC;
+        signal Red,Green,Blue 			: OUT std_logic_vector(2 downto 0);
+        signal Vert_sync					: IN std_logic;
+		  signal pixel_column, pixel_row : IN std_logic_vector(9 downto 0);
+		  signal             random : in std_logic_vector(7 downto 0);
+		  signal X_Pos, Y_Pos, Size_out, Size_out, Gap_Size : out std_logic_vector(9 downto 0);
+		  signal new_pickup : out std_logic;
+		  signal pickup_en : in std_logic);
+end pickup;
+
+architecture behavior of pickup is
+
+			-- Video Display signals   
+	signal Red_Data, Green_Data, Blue_Data : std_logic_vector(2 downto 0);
+	signal vert_sync_int, reset, pickup_on, Direction			: std_logic;
+	signal Size									: std_logic_vector(9 downto 0);  
+	signal pickup_X_motion 								: std_logic_vector(9 downto 0) := CONV_STD_LOGIC_VECTOR(2,10);
+	signal pickup_Y_motion									: std_logic_vector(9 downto 0);
+	signal pickup_Y_pos								: std_logic_vector(9 downto 0) := CONV_STD_LOGIC_VECTOR(50,10);
+	signal pickup_X_pos								: std_logic_vector(9 downto 0) := CONV_STD_LOGIC_VECTOR(300,10);
+	signal colour_set 							: std_logic_vector(2 downto 0);
+	signal new_pickup_s	: std_logic := '0';
+
+	begin           
+
+	Size <= CONV_STD_LOGIC_VECTOR(8,10);
+	
+
+
+	Red <=  pickup_on & pickup_on & pickup_on;
+	Green <=  "000";
+	Blue <=   pickup_on & pickup_on & pickup_on;
+
+	
+	
+	
+	-- Bottom pickup Top: y position + gap size
+	
+
+	RGB_Display: Process (pickup_X_pos, pickup_Y_pos, pixel_column, pixel_row, Size, random, pickup_en)
+	begin
+	--if (pickup_en = '1') then
+		-- top pickup
+		if ('0' & pickup_X_pos <= '0' & pixel_column + Size) AND -- Obs left: x position - xsize
+			('0' & pickup_X_pos + Size >= '0' & pixel_column) AND -- Obs right: x position + xsize
+			("0000000000" <= '0' & pixel_row) AND -- Top pickup Top: y position
+			(CONV_STD_LOGIC_VECTOR(150, 10) >= '0' & pixel_row ) then -- Top pickup Bottom: y position + random
+			--('0' & pickup_Y_pos + random >= '0' & pixel_row ) then -- Top pickup Bottom: y position + random
+			pickup_on <= '1';
+		-- bottom pickup
+		elsif('0' & pickup_X_pos <= '0' & pixel_column + Size) AND
+			('0' & pickup_X_pos + Size >= '0' & pixel_column) AND
+			(CONV_STD_LOGIC_VECTOR(150,10) + CONV_STD_LOGIC_VECTOR(100,10) <= '0' & pixel_row) AND
+			--('0' & pickup_Y_pos + '0' & random + CONV_STD_LOGIC_VECTOR(100,9) <= '0' & pixel_row) AND
+			("0111100000" >= '0' & pixel_row ) then -- bottom of screen
+			pickup_on <= '1';
+		else
+			pickup_on <= '0';
+		end if;
+	--end if;
+	end process RGB_Display;
+
+
+	Move_pickup: process
+	begin
+				-- Move pickup once every vertical sync
+		wait until vert_sync'event and vert_sync = '1';
+				-- Bounce off top or bottom of screen
+				--if (pickup_en = '1') then
+					if (paused = '0' and start = '0') then
+						if (SW = '0') then
+							if ("00" & pickup_X_pos) >= CONV_STD_LOGIC_VECTOR(640,11) - Size then
+								pickup_X_motion <= - CONV_STD_LOGIC_VECTOR(3,10);
+							end if;
+						else
+							if ("00" & pickup_X_pos) >= x"198" - Size then
+								pickup_X_motion <= - CONV_STD_LOGIC_VECTOR(5,10);
+							elsif pickup_X_pos <= Size then
+								pickup_X_motion <= CONV_STD_LOGIC_VECTOR(5,10);
+							end if;
+						end if;
+						-- Compute next pickup Y position
+			
+						if ('0' & pickup_X_pos) <= Size - Size then
+							pickup_X_pos <= CONV_STD_LOGIC_VECTOR(630,10);
+							new_pickup_s <= '1';
+						--elsif ('0' & pickup_X_pos) >= CONV_STD_LOGIC_VECTOR(635,10) then
+						--	new_pickup_s <= '1';
+						else
+							pickup_X_pos <= pickup_X_pos + pickup_X_motion;
+							new_pickup_s <= '0';
+						end if;
+					end if;
+				--end if;
+					
+	end process Move_pickup;
+	X_Pos <= pickup_X_pos;
+	Y_Pos <= CONV_STD_LOGIC_VECTOR(150, 10);
+	--Y_Pos <= pickup_Y_pos;
+	Size_out <= Size;
+	Size_out <= Size;
+	Gap_Size <= '0' & CONV_STD_LOGIC_VECTOR(100,9);
+	new_pickup <= new_pickup_s;
+end behavior;
+

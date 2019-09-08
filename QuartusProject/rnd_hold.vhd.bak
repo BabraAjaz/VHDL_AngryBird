@@ -1,0 +1,25 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+USE IEEE.STD_LOGIC_ARITH.all;
+USE IEEE.STD_LOGIC_UNSIGNED.all;
+
+entity rnd_hold is
+	port (
+				Q_in : in std_logic_vector(7 downto 0);
+				new_num: in std_logic;
+				Q_out : out std_logic_vector(7 downto 0)
+			);
+end entity rnd_hold;
+
+architecture behaviour of rnd_hold is
+	signal Q : std_logic_vector(7 downto 0); 
+begin
+	process(new_num)
+	begin
+		if (new_num = '1') then
+			Q <= Q_in;
+		end if;
+	end process;
+	Q_out <= Q;
+end architecture;
